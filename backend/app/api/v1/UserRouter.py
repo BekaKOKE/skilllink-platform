@@ -10,7 +10,7 @@ from backend.app.core.dependencies import (
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.UserSchema import UserUpdate
+from backend.app.schemas.UserSchema import UserUpdate, UserDto
 from backend.app.services.AuditService import AuditService
 from backend.app.services.UserService import UserService
 
@@ -23,7 +23,7 @@ router = APIRouter(
 # =========================
 # GET CURRENT USER
 # =========================
-@router.get("/me/profile")
+@router.get("/me/profile", response_model=UserDto)
 async def get_me(
     current_user: User = Depends(get_current_user)
 ):
@@ -33,7 +33,7 @@ async def get_me(
 # =========================
 # UPDATE USER
 # =========================
-@router.put("/{user_id}")
+@router.put("/{user_id}", response_model=UserDto)
 async def update_user(
     user_id: uuid.UUID,
     data: UserUpdate,

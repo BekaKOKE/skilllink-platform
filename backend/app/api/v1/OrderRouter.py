@@ -12,7 +12,7 @@ from backend.app.core.dependencies import (
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.OrderSchema import OrderCreate, OrderUpdate
+from backend.app.schemas.OrderSchema import OrderCreate, OrderUpdate, OrderDto
 from backend.app.services.AuditService import AuditService
 from backend.app.services.OrderService import OrderService
 from backend.app.services.SpecialistService import SpecialistService
@@ -26,7 +26,7 @@ router = APIRouter(
 # CREATE ORDER
 # ─────────────────────────────────────────
 
-@router.post("/")
+@router.post("/", response_model=OrderDto)
 async def create_order(
     data: OrderCreate,
     request: Request,
@@ -55,7 +55,7 @@ async def create_order(
 # GET ORDER BY ID
 # ─────────────────────────────────────────
 
-@router.get("/{order_id}")
+@router.get("/{order_id}", response_model=OrderDto)
 async def get_order(
     order_id: uuid.UUID,
     request: Request,
@@ -83,20 +83,20 @@ async def get_order(
 # USER ORDERS
 # ─────────────────────────────────────────
 
-@router.get("/my")
+@router.get("/my", response_model=list[OrderDto])
 async def get_my_orders(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_client)
 ):
 
-    return await OrderService.get_user_orders(session, current_user.id)
-
+    orders =  await OrderService.get_user_orders(session, current_user.id)
+    return orders
 
 # ─────────────────────────────────────────
 # ACTIVE ORDERS
 # ─────────────────────────────────────────
 
-@router.get("/active/list")
+@router.get("/active/list", response_model=list[OrderDto])
 async def get_active_orders(
     session: AsyncSession = Depends(get_session),
     limit: Optional[int] = None,
@@ -110,7 +110,7 @@ async def get_active_orders(
 # SPECIALIST ORDERS
 # ─────────────────────────────────────────
 
-@router.get("/specialist/my")
+@router.get("/specialist/my", response_model=[OrderDto])
 async def get_specialist_orders(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_any)
@@ -128,7 +128,7 @@ async def get_specialist_orders(
 # UPDATE ORDER
 # ─────────────────────────────────────────
 
-@router.put("/{order_id}")
+@router.put("/{order_id}", response_model=OrderDto)
 async def update_order(
     order_id: uuid.UUID,
     data: OrderUpdate,
@@ -162,7 +162,7 @@ async def update_order(
 # TAKE ORDER (specialist)
 # ─────────────────────────────────────────
 
-@router.post("/{order_id}/take")
+@router.post("/{order_id}/take", response_model=OrderDto)
 async def take_order(
     order_id: uuid.UUID,
     request: Request,
@@ -196,7 +196,7 @@ async def take_order(
 # COMPLETE ORDER
 # ─────────────────────────────────────────
 
-@router.post("/{order_id}/complete")
+@router.post("/{order_id}/complete", response_model=OrderDto)
 async def complete_order(
     order_id: uuid.UUID,
     request: Request,
@@ -230,7 +230,7 @@ async def complete_order(
 # CANCEL ORDER
 # ─────────────────────────────────────────
 
-@router.post("/{order_id}/cancel")
+@router.post("/{order_id}/cancel", response_model=OrderDto)
 async def cancel_order(
     order_id: uuid.UUID,
     request: Request,

@@ -11,7 +11,7 @@ from backend.app.core.dependencies import (
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.CatalogSchema import CatalogCreate, CatalogUpdate, CatalogFilter
+from backend.app.schemas.CatalogSchema import CatalogCreate, CatalogUpdate, CatalogFilter, CatalogDto
 from backend.app.services.AuditService import AuditService
 from backend.app.services.CatalogService import CatalogService
 from backend.app.services.SpecialistService import SpecialistService
@@ -25,7 +25,7 @@ router = APIRouter(
 # CREATE CATALOG ITEM
 # ─────────────────────────────────────────
 
-@router.post("/")
+@router.post("/", response_model=CatalogDto)
 async def create_catalog_item(
     data: CatalogCreate,
     request: Request,
@@ -54,42 +54,11 @@ async def create_catalog_item(
 
     return item
 
-
-# ─────────────────────────────────────────
-# GET ALL CATALOG ITEMS
-# ─────────────────────────────────────────
-
-@router.get("/")
-async def get_catalog(
-    request: Request,
-    session: AsyncSession = Depends(get_session),
-    filters: CatalogFilter = Depends(),
-    limit: Optional[int] = None,
-    offset: Optional[int] = None
-):
-
-    items = await CatalogService.get_all(
-        session,
-        filters,
-        limit,
-        offset
-    )
-
-    await AuditService.log(
-        session=session,
-        action=AuditAction.GET_CATALOG,
-        detail="Requested catalog list",
-        ip_address=request.client.host
-    )
-
-    return items
-
-
 # ─────────────────────────────────────────
 # GET SPECIALIST CATALOG
 # ─────────────────────────────────────────
 
-@router.get("/specialist/{specialist_id}")
+@router.get("/specialist/{specialist_id}", response_model=list[CatalogDto])
 async def get_specialist_catalog(
     specialist_id: uuid.UUID,
     request: Request,
@@ -117,7 +86,7 @@ async def get_specialist_catalog(
 # UPDATE CATALOG ITEM
 # ─────────────────────────────────────────
 
-@router.put("/{catalog_id}")
+@router.put("/{catalog_id}", response_model=CatalogDto)
 async def update_catalog_item(
     catalog_id: uuid.UUID,
     data: CatalogUpdate,

@@ -1,24 +1,18 @@
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.db.session import get_session
-from backend.app.db.models.user import User
-from backend.app.db.models.enums import AuditAction
-
-from backend.app.schemas.AccreditationSchema import AccreditationCreate
-
-from backend.app.services.AccreditationService import AccreditationService
-from backend.app.services.SpecialistService import SpecialistService
-from backend.app.services.AuditService import AuditService
-
 from backend.app.core.dependencies import (
-    require_specialist,
-    require_admin,
-    require_any
+    require_specialist
 )
+from backend.app.db.models.enums import AuditAction
+from backend.app.db.models.user import User
+from backend.app.db.session import get_session
+from backend.app.schemas.AccreditationSchema import AccreditationCreate, AccreditationDto
+from backend.app.services.AccreditationService import AccreditationService
+from backend.app.services.AuditService import AuditService
+from backend.app.services.SpecialistService import SpecialistService
 
 router = APIRouter(
     prefix="/accreditations",
@@ -29,7 +23,7 @@ router = APIRouter(
 # CREATE ACCREDITATION
 # ─────────────────────────────────────────
 
-@router.post("/")
+@router.post("/", response_model=AccreditationDto)
 async def create_accreditation(
     data: AccreditationCreate,
     request: Request,
@@ -63,7 +57,7 @@ async def create_accreditation(
 # GET SPECIALIST ACCREDITATIONS
 # ─────────────────────────────────────────
 
-@router.get("/specialist/{specialist_id}")
+@router.get("/specialist/{specialist_id}", response_model=AccreditationDto)
 async def get_specialist_accreditations(
     specialist_id: uuid.UUID,
     request: Request,

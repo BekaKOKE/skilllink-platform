@@ -4,10 +4,6 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
-from backend.app.schemas.CatalogSchema import CatalogResponseModel
-from backend.app.schemas.CommentSchema import CommentsResponseModel
-
-
 class SpecialistBase(BaseModel):
     pass
 

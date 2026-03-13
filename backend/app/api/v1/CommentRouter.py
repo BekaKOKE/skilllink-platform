@@ -4,13 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.dependencies import (
-    require_client,
-    require_any
+    require_client
 )
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.CommentSchema import CommentCreate, CommentFilter
+from backend.app.schemas.CommentSchema import CommentCreate, CommentFilter, CommentDto
 from backend.app.services.AuditService import AuditService
 from backend.app.services.CommentService import CommentService
 
@@ -23,7 +22,7 @@ router = APIRouter(
 # CREATE COMMENT
 # ─────────────────────────────────────────
 
-@router.post("/")
+@router.post("/", response_model=CommentDto)
 async def create_comment(
     data: CommentCreate,
     request: Request,
@@ -52,7 +51,7 @@ async def create_comment(
 # GET COMMENTS OF SPECIALIST
 # ─────────────────────────────────────────
 
-@router.get("/specialist/{specialist_id}")
+@router.get("/specialist/{specialist_id}", response_model=list[CommentDto])
 async def get_specialist_comments(
     specialist_id: uuid.UUID,
     request: Request,

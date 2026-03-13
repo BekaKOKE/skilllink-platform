@@ -10,7 +10,7 @@ from backend.app.core.dependencies import (
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.AddressSchema import AddressCreate
+from backend.app.schemas.AddressSchema import AddressCreate, AddressDto
 from backend.app.services.AddressService import AddressService
 from backend.app.services.AuditService import AuditService
 
@@ -23,7 +23,7 @@ router = APIRouter(
 # CREATE ADDRESS
 # ─────────────────────────────────────────
 
-@router.post("/")
+@router.post("/", response_model=AddressDto)
 async def create_address(
     data: AddressCreate,
     request: Request,
@@ -52,7 +52,7 @@ async def create_address(
 # GET MY ADDRESS
 # ─────────────────────────────────────────
 
-@router.get("/me")
+@router.get("/me", response_model=AddressDto)
 async def get_my_address(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user)

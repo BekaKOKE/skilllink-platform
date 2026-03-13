@@ -12,7 +12,7 @@ from backend.app.core.dependencies import (
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.SpecialistSchema import SpecialistCreate, SpecialistUpdate
+from backend.app.schemas.SpecialistSchema import SpecialistCreate, SpecialistUpdate, SpecialistDto
 from backend.app.services.AuditService import AuditService
 from backend.app.services.SpecialistService import SpecialistService
 
@@ -24,7 +24,7 @@ router = APIRouter(
 # =========================
 # CREATE SPECIALIST
 # =========================
-@router.post("/")
+@router.post("/", response_model=SpecialistDto)
 async def create_specialist(
     request: Request,
     data: SpecialistCreate,
@@ -50,7 +50,7 @@ async def create_specialist(
 # =========================
 # GET SPECIALIST BY ID
 # =========================
-@router.get("/{specialist_id}")
+@router.get("/{specialist_id}", response_model=SpecialistDto)
 async def get_specialist(
     specialist_id: uuid.UUID,
     request: Request,
@@ -74,7 +74,7 @@ async def get_specialist(
 # =========================
 # UPDATE SPECIALIST
 # =========================
-@router.put("/{specialist_id}")
+@router.put("/{specialist_id}", response_model=SpecialistDto)
 async def update_specialist(
     specialist_id: uuid.UUID,
     data: SpecialistUpdate,
@@ -106,7 +106,7 @@ async def update_specialist(
 # =========================
 # DEACTIVATE SPECIALIST
 # =========================
-@router.patch("/{specialist_id}/deactivate")
+@router.patch("/{specialist_id}/deactivate", response_model=SpecialistDto)
 async def deactivate_specialist(
     specialist_id: uuid.UUID,
     request: Request,
@@ -165,7 +165,7 @@ async def delete_specialist(
 # =========================
 # VERIFY SPECIALIST
 # =========================
-@router.patch("/{specialist_id}/verify")
+@router.patch("/{specialist_id}/verify", response_model=SpecialistDto)
 async def verify_specialist(
     specialist_id: uuid.UUID,
     request: Request,
@@ -193,7 +193,7 @@ async def verify_specialist(
 # =========================
 # FIND SPECIALISTS NEARBY
 # =========================
-@router.get("/search/nearby")
+@router.get("/search/nearby", response_model=SpecialistDto)
 async def find_specialists_nearby(
     lat: float,
     lon: float,

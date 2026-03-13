@@ -9,7 +9,7 @@ from backend.app.core.dependencies import (
 from backend.app.db.models.enums import AuditAction
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
-from backend.app.schemas.RateSchema import RateCreate
+from backend.app.schemas.RateSchema import RateCreate, RateDto
 from backend.app.services.AuditService import AuditService
 from backend.app.services.RateService import RateService
 
@@ -22,7 +22,7 @@ router = APIRouter(
 # CREATE RATE
 # ─────────────────────────────────────────
 
-@router.post("/")
+@router.post("/", response_model=RateDto)
 async def create_rate(
     data: RateCreate,
     request: Request,
@@ -51,7 +51,7 @@ async def create_rate(
 # GET SPECIALIST RATES
 # ─────────────────────────────────────────
 
-@router.get("/specialist/{specialist_id}")
+@router.get("/specialist/{specialist_id}", response_model=list[RateDto])
 async def get_specialist_rates(
     specialist_id: uuid.UUID,
     request: Request,
@@ -77,7 +77,7 @@ async def get_specialist_rates(
 # GET USER RATE FOR SPECIALIST
 # ─────────────────────────────────────────
 
-@router.get("/specialist/{specialist_id}/me")
+@router.get("/specialist/{specialist_id}/me", response_model=RateDto)
 async def get_my_rate(
     specialist_id: uuid.UUID,
     request: Request,
