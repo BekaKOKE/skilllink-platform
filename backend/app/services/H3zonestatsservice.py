@@ -20,8 +20,12 @@ class H3ZoneStatsService:
         return await H3ZoneStatsDao.get_by_h3_index(session, h3_index)
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[H3ZoneStats]:
-        return await H3ZoneStatsDao.get_all(session)
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[H3ZoneStats]:
+        return await H3ZoneStatsDao.get_all(session, limit, offset)
 
     @staticmethod
     async def on_order_created(

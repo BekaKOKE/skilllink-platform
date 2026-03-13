@@ -32,11 +32,21 @@ class CommentDao:
         return result.scalars().all()
 
     @staticmethod
-    async def get_all(session: AsyncSession, filters: CommentFilter) -> Sequence[Comment]:
+    async def get_all(
+            session: AsyncSession,
+            filters: CommentFilter,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[Comment]:
         query = (
             select(Comment).order_by(Comment.specialist_id)
         )
         query = CommentDao.apply_filters(query, filters)
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+        query = query.limit(limit).offset(offset)
         result = await session.execute(query)
         return result.scalars().all()
 

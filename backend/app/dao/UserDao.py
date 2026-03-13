@@ -29,8 +29,19 @@ class UserDao:
         return user
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[User]:
-        result = await session.execute(select(User))
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[User]:
+        query = (select(User))
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+        query = query.limit(limit).offset(offset)
+
+        result = await session.execute(query)
         return result.scalars().all()
 
     @staticmethod

@@ -18,7 +18,7 @@ class CatalogService:
         data: CatalogCreate
     ) -> Catalog:
 
-        await CreateValidation.isValidCatalog(session, specialist_id, data)
+        await CreateValidation.is_valid_catalog(session, specialist_id, data)
 
         item = Catalog(specialist_id=specialist_id, **data.model_dump())
         result = await CatalogDao.create(session, item)
@@ -45,6 +45,11 @@ class CatalogService:
         return result
 
     @staticmethod
-    async def get_all(session: AsyncSession, filters: CatalogFilter) -> list[Catalog]:
-        result = await CatalogDao.get_all(session, filters)
+    async def get_all(
+            session: AsyncSession,
+            filters: CatalogFilter,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> list[Catalog]:
+        result = await CatalogDao.get_all(session, filters, limit, offset)
         return result

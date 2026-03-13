@@ -28,8 +28,19 @@ class AccreditationDao:
         return result.scalars().all()
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[Accreditation]:
-        result = await session.execute(
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[Accreditation]:
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+
+        query = (
             select(Accreditation)
         )
+        query = query.offset(offset).limit(limit)
+        result = await session.execute(query)
         return result.scalars().all()

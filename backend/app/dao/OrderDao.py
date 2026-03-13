@@ -43,13 +43,24 @@ class OrderDao:
         return result.scalars().all()
 
     @staticmethod
-    async def get_active_orders(session: AsyncSession) -> Sequence[Order]:
-        result = await session.execute(
+    async def get_active_orders(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[Order]:
+        query = (
             select(Order)
             .where(Order.is_active == True)
             .where(Order.status == OrderStatus.open)
             .order_by(Order.created_at.desc())
         )
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+        query = query.limit(limit).offset(offset)
+
+        result = await session.execute(query)
         return result.scalars().all()
 
     @staticmethod

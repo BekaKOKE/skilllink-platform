@@ -1,4 +1,6 @@
 import uuid
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.db.models.comment import Comment
@@ -17,7 +19,7 @@ class CommentService:
         has_order = await CommentDao.check_completed_order(
             session, user_id, data.specialist_id
         )
-        await CreateValidation.isValidComment(session, user_id, data, has_order)
+        await CreateValidation.is_valid_comment(session, user_id, data, has_order)
 
         comment = Comment(user_id=user_id, **data.model_dump())
         result = await CommentDao.create(session, comment)
@@ -33,8 +35,13 @@ class CommentService:
         return result
 
     @staticmethod
-    async def get_all(session: AsyncSession, filters: CommentFilter) -> list[Comment]:
-        result = await CommentDao.get_all(session, filters)
+    async def get_all(
+            session: AsyncSession,
+            filters: CommentFilter,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> list[Comment]:
+        result = await CommentDao.get_all(session, filters,limit,offset)
         return result
 
     @staticmethod

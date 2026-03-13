@@ -39,7 +39,9 @@ class AccreditationService:
 
     @staticmethod
     async def get_all(
-            session: AsyncSession
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
     )-> list[Accreditation]:
-        result = await AccreditationDao.get_all(session)
+        result = await AccreditationDao.get_all(session, limit, offset)
         return result

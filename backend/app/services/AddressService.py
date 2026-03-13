@@ -17,7 +17,7 @@ class AddressService:
         user_id: uuid.UUID,
         data: AddressCreate,
     ) -> Address:
-        await CreateValidation.isValidAddress(session, user_id)
+        await CreateValidation.is_valid_address(session, user_id)
 
         h3_index = H3Service.geo_to_h3(data.lat, data.lon)
 
@@ -39,8 +39,12 @@ class AddressService:
         return result
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> list[Address]:
-        result = await AddressDao.get_all(session)
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> list[Address]:
+        result = await AddressDao.get_all(session,limit,offset)
         return result
 
     @staticmethod

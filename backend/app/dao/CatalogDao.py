@@ -1,5 +1,5 @@
 import uuid
-from typing import Sequence
+from typing import Sequence, Optional
 
 from sqlalchemy import select, Select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,12 +45,21 @@ class CatalogDao:
     @staticmethod
     async def get_all(
             session: AsyncSession,
-            filters: CatalogFilter
+            filters: CatalogFilter,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+
     ) -> Sequence[Catalog]:
         query = (
             select(Catalog).order_by(Catalog.specialist_id)
         )
         query = CatalogDao.apply_filters(query, filters)
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+        query = query.limit(limit).offset(offset)
+
         result = await session.execute(query)
         return result.scalars().all()
 

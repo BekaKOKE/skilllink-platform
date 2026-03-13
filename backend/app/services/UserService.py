@@ -17,8 +17,12 @@ pwd_context = CryptContext(
 class UserService:
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> list[User]:
-        result = await UserDao.get_all(session)
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> list[User]:
+        result = await UserDao.get_all(session,limit,offset)
         return result
 
     @staticmethod
@@ -54,36 +58,3 @@ class UserService:
     @staticmethod
     async def delete(session: AsyncSession, user: User) -> None:
         await UserDao.delete(session, user)
-
-    # ─────────────────────────────────────────
-    # AUTH HELPER
-    # ─────────────────────────────────────────
-
-    @staticmethod
-    def hash_password(password: str) -> str:
-        return pwd_context.hash(password)
-
-    @staticmethod
-    def verify_password(plain: str, hashed: str) -> bool:
-        return pwd_context.verify(plain, hashed)
-
-    @staticmethod
-    async def register(session: AsyncSession, data: UserCreate) -> User:
-        await CreateValidation.isValidUser(session, data)
-
-        user = User(
-            **data.model_dump(exclude={"password"}),
-            hashed_password=UserService.hash_password(data.password)
-        )
-
-        await UserDao.create(session, user)
-        return user
-
-    @staticmethod
-    async def authenticate(session: AsyncSession, email: str, password: str) -> Optional[User]:
-        user = await UserService.get_by_email(session, email)
-        if not user:
-            return None
-        if not UserService.verify_password(password, user.hashed_password):
-            return None
-        return user

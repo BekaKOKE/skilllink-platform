@@ -19,7 +19,7 @@ class SpecialistService:
             user_id: uuid.UUID,
             data: SpecialistCreate
     ) -> Specialist:
-        await CreateValidation.isValidSpecialist(session, user_id)
+        await CreateValidation.is_valid_specialist(session, user_id)
 
         h3_index = H3Service.geo_to_h3(data.lat, data.lon)
 
@@ -33,8 +33,12 @@ class SpecialistService:
         return result
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> list[Specialist]:
-        result = await SpecialistDao.get_all(session)
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> list[Specialist]:
+        result = await SpecialistDao.get_all(session, limit, offset)
         return result
 
     @staticmethod
@@ -61,7 +65,6 @@ class SpecialistService:
         new_h3 = result.h3_index
         if new_h3 and new_h3 != old_h3:
             await H3ZoneStatsService.on_specialist_h3_changed(session, old_h3, new_h3)
-
 
         return result
 

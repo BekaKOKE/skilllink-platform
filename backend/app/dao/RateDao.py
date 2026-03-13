@@ -18,13 +18,6 @@ class RateDao:
         return rate
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[Rate]:
-        result = await session.execute(
-            select(Rate).order_by(Rate.specialist_id)
-        )
-        return result.scalars().all()
-
-    @staticmethod
     async def get_user_rate(
         session: AsyncSession,
         user_id: uuid.UUID,

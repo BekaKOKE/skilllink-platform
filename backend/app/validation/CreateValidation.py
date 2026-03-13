@@ -17,7 +17,7 @@ from backend.app.exceptions.ValidationException import ValidationException
 class CreateValidation:
 
     @staticmethod
-    async def isValidUser(session: AsyncSession, data: UserCreate) -> None:
+    async def is_valid_user(session: AsyncSession, data: UserCreate) -> None:
         errors = []
 
         if await UserDao.get_by_email(session, data.email):
@@ -30,7 +30,7 @@ class CreateValidation:
             raise ValidationException(errors)
 
     @staticmethod
-    async def isValidSpecialist(session: AsyncSession, user_id: uuid.UUID) -> None:
+    async def is_valid_specialist(session: AsyncSession, user_id: uuid.UUID) -> None:
         errors = []
 
         if await SpecialistDao.get_by_user_id(session, user_id):
@@ -40,20 +40,23 @@ class CreateValidation:
             raise ValidationException(errors)
 
     @staticmethod
-    async def isValidCatalog(session: AsyncSession, specialist_id: uuid.UUID, data: CatalogCreate) -> None:
+    async def is_valid_catalog(session: AsyncSession, specialist_id: uuid.UUID, data: CatalogCreate) -> None:
         errors = []
         filters = CatalogFilter(
             job_type=data.job_type
         )
         if await CatalogDao.get_by_specialist_id(session, specialist_id, filters):
             errors.append("Specialist catalog already exists for this job type")
-        if not (await SpecialistDao.get_by_id(session, specialist_id)).is_verified:
+        specialist = await SpecialistDao.get_by_id(session, specialist_id)
+        if specialist is None:
+            errors.append("Specialist not found")
+        elif not specialist.is_verified:
             errors.append("Specialist is not verified to create this catalog")
         if errors:
             raise ValidationException(errors)
 
     @staticmethod
-    async def isValidAddress(session: AsyncSession, user_id: uuid.UUID) -> None:
+    async def is_valid_address(session: AsyncSession, user_id: uuid.UUID) -> None:
         errors = []
 
         if await AddressDao.get_by_user_id(session, user_id):
@@ -63,7 +66,7 @@ class CreateValidation:
             raise ValidationException(errors)
 
     @staticmethod
-    async def isValidRate(
+    async def is_valid_rate(
             session: AsyncSession,
             user_id: uuid.UUID,
             data: RateCreate,
@@ -81,7 +84,7 @@ class CreateValidation:
             raise ValidationException(errors)
 
     @staticmethod
-    async def isValidComment(
+    async def is_valid_comment(
             session: AsyncSession,
             user_id: uuid.UUID,
             data: CommentCreate,

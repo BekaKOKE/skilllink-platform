@@ -23,10 +23,21 @@ class H3ZoneStatsDao:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[H3ZoneStats]:
-        result = await session.execute(
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[H3ZoneStats]:
+        query = (
             select(H3ZoneStats).order_by(H3ZoneStats.h3_index)
         )
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+        query = query.limit(limit).offset(offset)
+
+        result = await session.execute(query)
         return result.scalars().all()
 
     @staticmethod

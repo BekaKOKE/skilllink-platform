@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.dao.SpecialistDao import SpecialistDao
 from backend.app.db.models.order import Order
 from backend.app.db.models.enums import OrderStatus
+from backend.app.exceptions.NotFoundException import NotFoundException
 from backend.app.schemas.OrderSchema import OrderCreate, OrderUpdate
 from backend.app.dao.OrderDao import OrderDao
 from backend.app.services.H3zonestatsservice import H3ZoneStatsService
@@ -24,8 +25,12 @@ class OrderService:
             **data.model_dump()
         )
         if order.specialist_id:
+            specialist = await SpecialistDao.get_by_id(session, order.specialist_id)
+            if specialist is None:
+                raise NotFoundException("Specialist not found")
             order.status = OrderStatus.in_progress
         result = await OrderDao.create(session, order)
+        await H3ZoneStatsService.on_order_created(session, result)
         return result
 
     @staticmethod
@@ -45,8 +50,12 @@ class OrderService:
         return result
 
     @staticmethod
-    async def get_active_orders(session: AsyncSession) -> list[Order]:
-        result = await OrderDao.get_active_orders(session)
+    async def get_active_orders(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> list[Order]:
+        result = await OrderDao.get_active_orders(session,limit,offset)
         return result
 
     @staticmethod
@@ -87,7 +96,7 @@ class OrderService:
     ) -> Order:
         order = await OrderDao.get_by_id_for_update(session, order_id)
         if order is None:
-            raise ValueError("Order not found")
+            raise NotFoundException("Order not found")
 
         specialist = await SpecialistDao.get_by_id(session, specialist_id)
         specialist_order = await OrderDao.get_specialist_active_order(session, specialist_id)

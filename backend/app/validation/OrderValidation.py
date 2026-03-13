@@ -44,8 +44,11 @@ class OrderValidation:
             errors.append("Order is no longer available")
         if not order.is_active:
             errors.append("Order is not active")
+
         if not specialist:
             errors.append("Specialist not found")
+            raise ValidationException(errors)
+
         if not specialist.is_verified:
             errors.append("Only verified specialists can take orders")
         if not specialist.is_active:

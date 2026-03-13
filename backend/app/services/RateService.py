@@ -17,7 +17,7 @@ class RateService:
         has_order = await RateDao.check_completed_order(
             session, user_id, data.specialist_id
         )
-        await CreateValidation.isValidRate(session, user_id, data, has_order)
+        await CreateValidation.is_valid_rate(session, user_id, data, has_order)
 
         rate = Rate(user_id=user_id, **data.model_dump())
         result = await RateDao.create(session, rate)

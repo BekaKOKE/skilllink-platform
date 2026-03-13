@@ -19,8 +19,22 @@ class SpecialistDao:
         return specialist
 
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[Specialist]:
-        result = await session.execute(select(Specialist).order_by(Specialist.user_id))
+    async def get_all(
+            session: AsyncSession,
+            limit: Optional[int] = None,
+            offset: Optional[int] = None
+    ) -> Sequence[Specialist]:
+        query = (
+            select(Specialist)
+            .order_by(Specialist.user_id)
+        )
+        if limit is None:
+            limit = 50
+        if offset is None:
+            offset = 0
+        query = query.limit(limit).offset(offset)
+
+        result = await session.execute(query)
         return result.scalars().all()
 
     @staticmethod
