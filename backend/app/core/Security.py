@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 import bcrypt
 from jose import JWTError, jwt
@@ -30,7 +31,12 @@ def create_access_token(data: dict) -> str:
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
-    to_encode.update({"exp": expire})
+    jti = str(uuid.uuid4())
+
+    to_encode.update({
+        "exp": expire,
+        "jti": jti
+    })
 
     return jwt.encode(
         to_encode,
@@ -48,3 +54,4 @@ def decode_token(token: str):
         )
     except JWTError:
         return None
+

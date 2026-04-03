@@ -9,6 +9,7 @@ from backend.app.core.Security import decode_token
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
 from backend.app.dao.UserDao import UserDao
+from backend.app.services.TokenBlocklistService import TokenBlocklistService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -27,6 +28,11 @@ async def get_current_user(
 
     payload = decode_token(credentials.credentials)
     if payload is None:
+        raise credentials_exception
+
+    jti = payload.get("jti")
+
+    if await TokenBlocklistService.is_blocked(jti):
         raise credentials_exception
 
     user_id_str: str = payload.get("sub")

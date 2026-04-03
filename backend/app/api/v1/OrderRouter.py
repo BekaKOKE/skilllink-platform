@@ -110,7 +110,7 @@ async def get_active_orders(
 # SPECIALIST ORDERS
 # ─────────────────────────────────────────
 
-@router.get("/specialist/my", response_model=[OrderDto])
+@router.get("/specialist/my", response_model=list[OrderDto])
 async def get_specialist_orders(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_any)

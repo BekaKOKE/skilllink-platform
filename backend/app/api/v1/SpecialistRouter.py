@@ -193,7 +193,7 @@ async def verify_specialist(
 # =========================
 # FIND SPECIALISTS NEARBY
 # =========================
-@router.get("/search/nearby", response_model=SpecialistDto)
+@router.get("/search/nearby", response_model=list[SpecialistDto])
 async def find_specialists_nearby(
     lat: float,
     lon: float,
@@ -202,7 +202,6 @@ async def find_specialists_nearby(
     max_price: Optional[int] = None,
     request: Request = None,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_any)
 ):
     specialists = await SpecialistService.find_specialists_nearby(
         session=session,
@@ -215,7 +214,6 @@ async def find_specialists_nearby(
 
     await AuditService.log(
         session=session,
-        user_id=current_user.id,
         action=AuditAction.SPECIALIST_SEARCH,
         detail=f"Search specialists near {lat},{lon}",
         ip_address=request.client.host if request else None

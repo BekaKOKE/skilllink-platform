@@ -1,11 +1,12 @@
 import uuid
 from typing import Optional, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
 from backend.app.dao.UserDao import UserDao
+from backend.app.db.models import User, UserRole
 from backend.app.db.models.catalog import Catalog
 from backend.app.db.models.specialist import Specialist
 
@@ -14,7 +15,14 @@ class SpecialistDao:
 
     @staticmethod
     async def create(session: AsyncSession, specialist: Specialist) -> Specialist:
+
         session.add(specialist)
+        await session.execute(
+            update(User)
+            .where(User.id == specialist.user_id)
+            .values(role=UserRole.specialist)
+        )
+
         await session.flush()
         return specialist
 
