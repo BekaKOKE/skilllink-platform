@@ -28,6 +28,7 @@ class User(SQLModel, table=True):
     phone: str = Field(unique=True)
     email: str = Field(unique=True)
     hashed_password: str
+    is_verified: bool = Field(default=False)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_type=DateTime(timezone=True),

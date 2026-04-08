@@ -14,7 +14,6 @@ from backend.app.db.session import get_session
 from backend.app.schemas.OrderRequestsSchema import OrderRequestCreate
 from backend.app.schemas.UserSchema import UserUpdate, UserDto
 from backend.app.services.OrderRequestsService import OrderRequestsService
-from backend.app.services.a.AuditService import AuditService
 from backend.app.services.UserService import UserService
 
 router = APIRouter(
@@ -32,13 +31,6 @@ async def get_me(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.USER,
-        detail=f"{request.client.host} - GET - /profile - 200"
-    )
     return current_user
 
 
@@ -56,35 +48,13 @@ async def update_user(
     user = await UserService.get_by_id(session, user_id)
 
     if not user:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.USER,
-            detail=f"{request.client.host} - PUT - /update/{user_id} - 404 - user not found"
-        )
         raise HTTPException(status_code=404, detail="User not found")
 
     # пользователь может менять только себя
     if current_user.id != user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.USER,
-            detail=f"{request.client.host} - PUT - /update/{user_id} - 403 - not allowed to update"
-        )
         raise HTTPException(status_code=403, detail="Not allowed to update")
 
     updated_user = await UserService.update(session, user, data)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.USER,
-        detail=f"{request.client.host} - PUT - /update/{user_id} - 200"
-    )
 
     return updated_user
 
@@ -102,33 +72,11 @@ async def delete_user(
     user = await UserService.get_by_id(session, user_id)
 
     if not user:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.USER,
-            detail=f"{request.client.host} - DELETE - /delete/{user_id} - 404 - user not found"
-        )
         raise HTTPException(status_code=404, detail="User not found")
 
     if current_user.id != user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.USER,
-            detail=f"{request.client.host} - DELETE - /delete/{user_id} - 403 - not allowed to delete"
-        )
         raise HTTPException(status_code=403, detail="Not allowed to delete")
 
     await UserService.delete(session, user)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.USER,
-        detail=f"{request.client.host} - DELETE - /delete/{user_id} - 200"
-    )
 
     return {"message": "User deleted"}

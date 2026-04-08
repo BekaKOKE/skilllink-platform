@@ -14,11 +14,14 @@ from backend.app.api.v1.OrderRouter import router as order_router
 from backend.app.api.v1.SpecialistRouter import router as specialist_router
 from backend.app.api.v1.UserRouter import router as user_router
 from backend.app.api.v1.RequestsRouter import router as request_router
+from backend.app.api.v1.FileRouter import router as file_router
 from backend.app.core.Redis import redis_client
 from backend.app.db.session import engine
 from backend.app.exceptions.NotFoundException import NotFoundException
 from backend.app.exceptions.ValidationException import ValidationException
-from backend.app.core.middleware import LoggingMiddleware
+from backend.app.middleware.middleware import LoggingMiddleware
+from backend.app.middleware.rate_limit_middleware import RateLimitMiddleware
+from backend.app.middleware.profiling_middleware import ProfilingMiddleware, get_latency_report
 
 
 # -------------------------
@@ -57,6 +60,8 @@ app = FastAPI(
 
 # 1a. CORS
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(ProfilingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -109,6 +114,7 @@ app.include_router(specialist_router,     prefix="/api/v1")
 app.include_router(order_router,          prefix="/api/v1")
 app.include_router(catalog_router,        prefix="/api/v1")
 app.include_router(request_router,        prefix="/api/v1")
+app.include_router(file_router,           prefix="/api/v1")
 
 
 # -------------------------
@@ -117,3 +123,7 @@ app.include_router(request_router,        prefix="/api/v1")
 @app.get("/", tags=["Health"])
 async def health_check():
     return {"status": "ok", "app": "SkillLink API"}
+
+@app.get("/api/v1/admin/profiling", tags=["Admin"])
+async def profiling_report():
+    return get_latency_report()

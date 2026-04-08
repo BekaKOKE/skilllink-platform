@@ -10,7 +10,6 @@ from backend.app.db.models.enums import LogType, ServiceType
 from backend.app.db.models.user import User
 from backend.app.db.session import get_session
 from backend.app.schemas.CatalogSchema import CatalogCreate, CatalogUpdate, CatalogFilter, CatalogDto
-from backend.app.services.a.AuditService import AuditService
 from backend.app.services.a.CatalogService import CatalogService
 from backend.app.services.SpecialistService import SpecialistService
 
@@ -34,27 +33,12 @@ async def create_catalog_item(
     specialist = await SpecialistService.get_by_user_id(session, current_user.id)
 
     if not specialist:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.CATALOG,
-            detail=f"{request.client.host} - POST - /create - 404 - specialist not found"
-        )
         raise HTTPException(404, "Specialist profile not found")
 
     item = await CatalogService.create(
         session,
         specialist.id,
         data
-    )
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.CATALOG,
-        detail=f"{request.client.host} - POST - /create - 200"
     )
 
     return item
@@ -78,14 +62,6 @@ async def get_specialist_catalog(
         filters
     )
 
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.CATALOG,
-        detail=f"{request.client.host} - GET - /get/catalog/{specialist_id} - 200"
-    )
-
     return items
 
 
@@ -107,36 +83,14 @@ async def update_catalog_item(
     item = next((i for i in item if i.id == catalog_id), None)
 
     if not item:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.CATALOG,
-            detail=f"{request.client.host} - PUT - /update/{catalog_id} - 404 - catalog not found"
-        )
         raise HTTPException(404, f"Catalog item {catalog_id} not found")
 
     specialist = await SpecialistService.get_by_user_id(session, current_user.id)
 
     if item.specialist_id != specialist.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.CATALOG,
-            detail=f"{request.client.host} - PUT - /update/{catalog_id} - 403 - not allowed to update"
-        )
         raise HTTPException(403, "Not allowed to update catalog item")
 
     updated = await CatalogService.update(session, item, data)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.CATALOG,
-        detail=f"{request.client.host} - PUT - /update/{catalog_id} - 200"
-    )
 
     return updated
 
@@ -158,35 +112,13 @@ async def delete_catalog_item(
     item = next((i for i in items if i.id == catalog_id), None)
 
     if not item:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.CATALOG,
-            detail=f"{request.client.host} - DELETE - /delete/{catalog_id} - 404 - catalog not found"
-        )
         raise HTTPException(404, f"Catalog item not found")
 
     specialist = await SpecialistService.get_by_user_id(session, current_user.id)
 
     if item.specialist_id != specialist.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.CATALOG,
-            detail=f"{request.client.host} - DELETE - /delete/{catalog_id} - 403 - not allowed to delete"
-        )
         raise HTTPException(403, "Not allowed to delete catalog item")
 
     await CatalogService.delete(session, item)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.CATALOG,
-        detail=f"{request.client.host} - DELETE - /delete/{catalog_id} - 200"
-    )
 
     return {"message": "Catalog item deleted"}

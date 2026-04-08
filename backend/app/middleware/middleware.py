@@ -1,4 +1,5 @@
 import time
+import uuid
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -6,6 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from backend.app.db.session import AsyncSessionFactory
 from backend.app.db.models.enums import LogType, ServiceType
 from backend.app.services.a.AuditService import AuditService
+from backend.app.core.Security import decode_token
 
 
 def _classify(status_code: int) -> LogType:
@@ -32,10 +34,25 @@ def _detect_service(path: str) -> ServiceType:
     return ServiceType.HTTP
 
 
+def _extract_user_id(request: Request) -> uuid.UUID | None:
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth.removeprefix("Bearer ")
+    payload = decode_token(token)
+    if not payload:
+        return None
+    try:
+        return uuid.UUID(payload.get("sub"))
+    except Exception:
+        return None
+
+
 class LoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:
         start = time.perf_counter()
+        user_id = _extract_user_id(request)
 
         forwarded = request.headers.get("X-Forwarded-For")
         client_ip = forwarded.split(",")[0].strip() if forwarded else (
@@ -58,6 +75,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     session=session,
                     log_type=LogType.ERROR,
                     service=_detect_service(url),
+                    user_id=user_id,
                     detail=detail,
                 )
                 await session.commit()
@@ -71,6 +89,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 session=session,
                 log_type=_classify(status_code),
                 service=_detect_service(url),
+                user_id=user_id,
                 detail=detail,
             )
             await session.commit()

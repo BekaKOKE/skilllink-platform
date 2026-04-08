@@ -14,7 +14,6 @@ from backend.app.db.models.user import User
 from backend.app.db.session import get_session
 from backend.app.schemas.OrderRequestsSchema import OrderRequestCreate
 from backend.app.schemas.OrderSchema import OrderCreate, OrderUpdate, OrderDto
-from backend.app.services.a.AuditService import AuditService
 from backend.app.services.OrderService import OrderService
 from backend.app.services.OrderRequestsService import OrderRequestsService
 from backend.app.services.SpecialistService import SpecialistService
@@ -33,21 +32,13 @@ async def create_order(
     data: OrderCreate,
     request: Request,
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(require_client)
+    current_user: User = Depends(require_any)
 ):
 
     order = await OrderService.create(
         session,
         current_user.id,
         data
-    )
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - POST - /create/ - 200"
     )
 
     return order
@@ -68,23 +59,7 @@ async def get_order(
     order = await OrderService.get_by_id(session, order_id)
 
     if not order:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - GET - /get/{order_id} - 404 - order not found"
-        )
         raise HTTPException(404, "Order not found")
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - GET - /get/{order_id} - 200"
-    )
-
     return order
 
 
@@ -101,14 +76,6 @@ async def get_my_orders(
 
     orders =  await OrderService.get_user_orders(session, current_user.id)
 
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - GET - /my - 200"
-    )
-
     return orders
 
 # ─────────────────────────────────────────
@@ -124,14 +91,6 @@ async def get_active_orders(
     current_user: User = Depends(require_specialist)
 ):
     orders =  await OrderService.get_active_orders(session, limit, offset)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - GET - /active - 200"
-    )
 
     return orders
 
@@ -150,22 +109,7 @@ async def get_specialist_orders(
     specialist = await SpecialistService.get_by_user_id(session, current_user.id)
 
     if not specialist:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - GET - /active - 404 - specialist not found"
-        )
         raise HTTPException(404, "Specialist profile not found")
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - GET - /active - 200"
-    )
 
     return await OrderService.get_specialist_orders(session, specialist.id)
 
@@ -186,34 +130,12 @@ async def update_order(
     order = await OrderService.get_by_id(session, order_id)
 
     if not order:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - PUT - /update/{order_id} - 404 - order not found"
-        )
         raise HTTPException(404, "Order not found")
 
     if order.user_id != current_user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - PUT - /update/{order_id} - 403 - not allowed to update"
-        )
         raise HTTPException(403, "Not allowed to update order")
 
     result = await OrderService.update(session, order, data)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - PUT - /update/{order_id} - 200"
-    )
 
     return result
 
@@ -233,42 +155,14 @@ async def take_order(
     specialist = await SpecialistService.get_by_user_id(session, current_user.id)
 
     if not specialist:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /take/{order_id} - 404 - specialist not found"
-        )
         raise HTTPException(404, "Specialist profile not found")
 
     order = await OrderService.get_by_id(session, order_id)
     if not order:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /take/{order_id} - 404 - order not found"
-        )
         raise HTTPException(404, "Order not found")
     if order.status != OrderStatus.open:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /take/{order_id} - 400 - order is not open"
-        )
         raise HTTPException(400, "Order is not available")
     if order.user_id == current_user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /take/{order_id} - 400 - can not take order"
-        )
         raise HTTPException(400, "Cannot take your own order")
 
     data = OrderRequestCreate(
@@ -278,14 +172,6 @@ async def take_order(
     )
 
     await OrderRequestsService.try_to_take_order(session,data)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - POST - /take/{order_id} - 200"
-    )
 
     return {"message": "Thank You for the interest. Please Wait the approval"}
 
@@ -305,36 +191,14 @@ async def complete_order(
     order = await OrderService.get_by_id(session, order_id)
 
     if not order:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /complete/{order_id} - 404 - order not found"
-        )
         raise HTTPException(404, "Order not found")
     if order.user_id == current_user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /complete/{order_id} - 404 - not allowed to delete"
-        )
         raise HTTPException(404, "Not allowed to delete order")
 
     result = await OrderService.complete_order(
         session,
         order,
         current_user.id
-    )
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - POST - /complete/{order_id} - 200"
     )
 
     return result
@@ -355,23 +219,9 @@ async def cancel_order(
     order = await OrderService.get_by_id(session, order_id)
 
     if not order:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /cancel/{order_id} - 404 - order not found"
-        )
         raise HTTPException(404, "Order not found")
 
     if order.user_id == current_user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - POST - /cancel/{order_id} - 404 - not allowed to delete"
-        )
         raise HTTPException(404, "Not allowed to delete order")
 
     result = await OrderService.cancel_order(
@@ -379,15 +229,6 @@ async def cancel_order(
         order,
         current_user.id
     )
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - POST - /cancel/{order_id} - 200"
-    )
-
     return result
 
 
@@ -406,32 +247,10 @@ async def delete_order(
     order = await OrderService.get_by_id(session, order_id)
 
     if not order:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - DELETE - /delete/{order_id} - 404 - order not found"
-        )
         raise HTTPException(404, "Order not found")
     if order.user_id != current_user.id:
-        await AuditService.log(
-            session=session,
-            user_id=current_user.id,
-            log_type=LogType.ERROR,
-            service=ServiceType.ORDER,
-            detail=f"{request.client.host} - DELETE - /delete/{order_id} - 403 - not allowed to delete"
-        )
         raise HTTPException(403, "Not allowed to delete order")
 
     await OrderService.delete(session, order)
-
-    await AuditService.log(
-        session=session,
-        user_id=current_user.id,
-        log_type=LogType.INFO,
-        service=ServiceType.ORDER,
-        detail=f"{request.client.host} - DELETE - /delete/{order_id} - 200"
-    )
 
     return {"message": "Order deleted"}
